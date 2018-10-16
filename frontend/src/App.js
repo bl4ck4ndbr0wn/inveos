@@ -32,19 +32,14 @@ class App extends Component {
     try {
       const newInvoice = {
         ...invoice,
-        _id: {
-          timestamp: Math.floor(Date.now() / 1000),
-          author: process.env.REACT_APP_EOSIO_ACCOUNT
-        },
-        author: process.env.REACT_APP_EOSIO_ACCOUNT
+        supplier: process.env.REACT_APP_EOSIO_ACCOUNT
       };
 
       await this.eosio.transaction(
         process.env.REACT_APP_EOSIO_ACCOUNT,
         "initiate",
         {
-          timestamp: newInvoice._id.timestamp,
-          author: newInvoice._id.author,
+          supplier: newInvoice.supplier,
           ...invoice
         }
       );
@@ -66,7 +61,20 @@ class App extends Component {
   };
 
   render() {
-    return <div className="App">s</div>;
+    return (
+      <div>
+        <footer>
+          <div class="container">
+            <div class="row">
+              <div class="col-md-4 offset-md-4">
+                <br />
+                <p>INVOES 2018</p>
+              </div>
+            </div>
+          </div>
+        </footer>
+      </div>
+    );
   }
 }
 

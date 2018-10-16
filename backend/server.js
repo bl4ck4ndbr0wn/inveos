@@ -7,7 +7,7 @@ const io = require("./utils/io");
 
 app.use(cors());
 
-app.use("/supplychain", SupplychainRoute);
+app.use("/invoices", SupplychainRoute);
 
 const port = process.env.PORT;
 
