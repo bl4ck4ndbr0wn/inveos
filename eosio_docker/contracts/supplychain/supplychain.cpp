@@ -29,14 +29,14 @@ class supplychain : public contract {
   void approve(uint64_t orderId, account_name approver, string approver_category){
     require_auth(approver);
 
-    _approvals.emplace(id, [&](auto& rcrd){
-      rcrd.id = id;
+    _approvals.emplace(orderId, [&](auto& rcrd){
+      rcrd.orderId = orderId;
       rcrd.approver = approver;
-      if(approver_category == 'Supplier'){
-        rcrd.supplier_approval = 'Approved';
+      if(approver_category.compare("SFC") == 0){
+        rcrd.supplier_approval = "Approved";
       }
-      else if(approver_category == 'Fnc'){
-        rcrd.financier_approval = 'Approved';
+      else if(approver_category == "Fnc"){
+        rcrd.financier_approval = "Approved";
       }
     });
 
@@ -44,17 +44,17 @@ class supplychain : public contract {
   }
   private:
 
-    struct [[eosio::table]] order{
+    struct [[eosio::table]] ordert{
       uint64_t id;
       account_name purchaser;
       account_name supplier;
       account_name fnc;
 
       uint64_t primary_key() const {return id;}
-    }
-    typedef eosio::multi_index<N(orders), order> orders_table;
+    };
+    typedef eosio::multi_index<N(orders), ordert> orders_table;
 
-    struct [[eosio::table]] approval{
+    struct [[eosio::table]] approvall{
       uint64_t id;
       uint64_t orderId;
       account_name approver;
@@ -62,8 +62,8 @@ class supplychain : public contract {
       string financier_approval;
 
       uint64_t primary_key() const {return id;}
-    }
-  typedef eosio::multi_index<N(approvals), approval> approvals_table;
+    };
+  typedef eosio::multi_index<N(approvals), approvall> approvals_table;
 
   orders_table _orders;
 
