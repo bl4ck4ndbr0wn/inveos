@@ -1,34 +1,74 @@
-#include "supplychain.hpp"
+
+#include <eosiolib/eosio.hpp>
+
 using namespace eosio;
 using namespace std;
 
-// @bi action initiate
-void supplychain::initiate(const account_name supplier,
-                           vector<string> products,
-                           const account_name buyer,
-                           const uint64_t timestamp)
-{
-  // Check if authorized
-  require_auth(supplier);
+class supplychain : public contract {
+  public:
+    supplychain(account_name self):contract(self), _orders(self, self), _approvals(self, self){}
 
-  // Validation check
-  eosio_assert(products.size() > 0, "Can not send a blank Invoice.");
+  [[eosio::action]]
+  void order(account_name purchaser, account_name supplier, account_name fnc, uint64_t id){
+    require_auth(purchaser);
 
-  // check if buyer exists
-  if (is_account(buyer))
-  {
-    require_recipient(buyer);
-    print(name{buyer}, " Found", "\n");
-  }
-  else
-  {
-    print(name{buyer}, " Not Found", "\n");
+    // Save to table
+    eosio_assert( _orders.find( id ) == _orders.end(), "An order with this ID exist" );
+
+      
+         _orders.emplace( id, [&]( auto& rcrd ) {
+            rcrd.id = id;
+            rcrd.purchaser    = purchaser;
+            rcrd.supplier    = supplier;
+            rcrd.fnc = fnc;
+      
+         });
   }
 
-  for (int i = 0; i < products.size(); it++)
-  {
-    print(products[i]);
-  }
-}
+  [[eosio::action]]
+  void approve(uint64_t orderId, account_name approver, string approver_category){
+    require_auth(approver);
 
-EOSIO_ABI(supplychain, (initiate))
+    _approvals.emplace(id, [&](auto& rcrd){
+      rcrd.id = id;
+      rcrd.approver = approver;
+      if(approver_category == 'Supplier'){
+        rcrd.supplier_approval = 'Approved';
+      }
+      else if(approver_category == 'Fnc'){
+        rcrd.financier_approval = 'Approved';
+      }
+    });
+
+
+  }
+  private:
+
+    struct [[eosio::table]] order{
+      uint64_t id;
+      account_name purchaser;
+      account_name supplier;
+      account_name fnc;
+
+      uint64_t primary_key() const {return id;}
+    }
+    typedef eosio::multi_index<N(orders), order> orders_table;
+
+    struct [[eosio::table]] approval{
+      uint64_t id;
+      uint64_t orderId;
+      account_name approver;
+      string supplier_approval;
+      string financier_approval;
+
+      uint64_t primary_key() const {return id;}
+    }
+  typedef eosio::multi_index<N(approvals), approval> approvals_table;
+
+  orders_table _orders;
+
+  approvals_table _approvals;
+
+};
+
+EOSIO_ABI(supplychain, (order)(approve))
