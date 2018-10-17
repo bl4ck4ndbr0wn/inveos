@@ -16,13 +16,14 @@ class supplychain : public contract {
     eosio_assert( _orders.find( id ) == _orders.end(), "An order with this ID exist" );
 
       
-         _orders.emplace( id, [&]( auto& rcrd ) {
+         _orders.emplace( purchaser, [&]( auto& rcrd ) {
             rcrd.id = id;
             rcrd.purchaser    = purchaser;
             rcrd.supplier    = supplier;
             rcrd.fnc = fnc;
       
          });
+        //  pay(purchaser, supplier, "10.0000 SYS");
   }
 
   [[eosio::action]]
@@ -42,6 +43,15 @@ class supplychain : public contract {
 
 
   }
+
+
+  [[eosio::action]]
+  void acknowledge(uint64_t orderId, account_name fnc, account_name supplier){
+    require_auth(fnc);
+
+
+
+  }
   private:
 
     struct [[eosio::table]] ordert{
@@ -54,7 +64,7 @@ class supplychain : public contract {
     };
     typedef eosio::multi_index<N(orders), ordert> orders_table;
 
-    struct [[eosio::table]] approvall{
+    struct [[eosio::table]] approval{
       uint64_t id;
       uint64_t orderId;
       account_name approver;
@@ -63,11 +73,19 @@ class supplychain : public contract {
 
       uint64_t primary_key() const {return id;}
     };
-  typedef eosio::multi_index<N(approvals), approvall> approvals_table;
+  typedef eosio::multi_index<N(approvals), approval> approvals_table;
 
   orders_table _orders;
 
   approvals_table _approvals;
+  void pay(account_name from, account_name to, string quantity){
+        action(
+        permission_level{ from, N(active) },
+        N(eosio.token), N(transfer),
+        std::make_tuple(from, to, quantity, std::string(""))
+     ).send();
+  }
+
 
 };
 
